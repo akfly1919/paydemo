@@ -9,6 +9,8 @@ public class MchInfo {
 	private String mchId;
 	
 	private String payType;
+	
+	private String key;
 
 	public String getId() {
 		return id;
@@ -42,5 +44,24 @@ public class MchInfo {
 		this.payType = payType;
 	}
 
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public MchInfo(String id, String appid, String mchId, String payType, String key) {
+		super();
+		this.id = id;
+		this.appid = appid;
+		this.mchId = mchId;
+		this.payType = payType;
+		this.key = key;
+	}
+
+	public MchInfo() {
+	}
 	
 }
