@@ -1,0 +1,44 @@
+@startuml
+
+title recoketmq-store
+==实例阶段==
+BrokerController->BrokerController:init
+BrokerController ->DefaultMessageStore:\tload
+DefaultMessageStore ->CommitLog:\tload
+DefaultMessageStore ->IndexService:\tload
+==启动阶段==
+BrokerController ->DefaultMessageStore:start
+DefaultMessageStore ->ReputMessageService:start
+ReputMessageService ->ReputMessageService:run(doReput)
+==生成索引==
+ReputMessageService ->CommitLog:\tgetData(reputFromOffset)
+ReputMessageService <-CommitLog:\tSelectMapedBufferResult
+ReputMessageService ->CommitLog:\tcheckMessageAndReturnSize
+CommitLog ->DefaultMessageStore:\tdoDispatch
+DefaultMessageStore ->IndexService:\tbuildIndex
+==存消息==
+Product ->BrokerController:发消息
+BrokerController ->DefaultMessageStore:\tputMessage
+DefaultMessageStore ->CommitLog:\tputMessage
+CommitLog ->MapedFileQueue:getLastMapedFileWithLock
+MapedFileQueue ->CommitLog:返回mapedFile
+CommitLog ->MapedFile:\t\tappendMessage
+MapedFile ->DefaultAppendMessageCallback:\t\tdoAppend
+DefaultAppendMessageCallback ->MapedFile:返回AppendMessageResult(byteBuffer)
+MapedFile ->CommitLog:返回AppendMessageResult
+CommitLog ->CommitLog:同步刷盘/异步刷盘/双写
+CommitLog ->DefaultMessageStore:返回结果PutMessageResult
+DefaultMessageStore ->BrokerController:返回
+==取消息==
+BrokerController ->DefaultMessageStore:\tqueryMessage
+DefaultMessageStore ->IndexService:\tqueryOffset
+DefaultMessageStore <-IndexService:\tQueryOffsetResult(PhyOffsets)
+DefaultMessageStore ->DefaultMessageStore:lookMessageByOffset(根据下标去查)
+DefaultMessageStore ->CommitLog:getMessage(size=4)先取一条
+DefaultMessageStore <-CommitLog:返回MessageExt
+DefaultMessageStore ->DefaultMessageStore:遍历找到相同的key
+DefaultMessageStore ->CommitLog:getData获取到从offset到现在可以读取的数据
+DefaultMessageStore <-CommitLog:返回SelectMapedBufferResult
+DefaultMessageStore ->BrokerController:组装成QueryMessageResult
+
+@enduml

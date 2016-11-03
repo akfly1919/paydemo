@@ -1,0 +1,18 @@
+@startuml
+
+title recoketmq-filterSrv
+==启动阶段==
+Filter -> Broker:REGISTER_FILTER_SERVER
+Filter -> Filter:fetchClassFromRemoteHost\n(主动加载filter代码)
+Broker -> Filter:\t\t注册成功
+Client -> Broker:GET_ROUTEINTO_BY_TOPIC
+Broker -> Client:\t获取到TopicRouteData
+Client -> Filter:\t\t\tREGISTER_MESSAGE_FILTER_CLASS
+Filter -> Client:\t\t\tok
+==调用阶段==
+Client -> Client:pullSyncImpl \ncomputPullFromWhichFilterServer
+Client -> Filter:\t\t\t\tPULL_MESSAGE
+Filter -> Broker:\t\tpullAsyncImpl
+Broker --> Filter:PullCallback 
+Filter -> Client: \t\t\t\t\tfilter match==true
+@enduml

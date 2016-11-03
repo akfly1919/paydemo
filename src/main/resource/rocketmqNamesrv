@@ -1,0 +1,23 @@
+@startuml
+
+title recoketmq-nameSrv
+==初始阶段==
+NamesrvStartup ->NamesrvController:\tinitialize
+NamesrvController -> RouteInfoManager:new
+NamesrvController ->DefaultRequestProcessor:registerProcessor
+NamesrvController ->NettyRemotingServer:registerDefaultProcessor
+==启动阶段==
+NamesrvController ->NettyRemotingServer:\t\tstart
+==调用阶段==
+"broker\nfilter\nconsumer\nproducter" ->NettyRemotingServer:CRUD注册信息
+NettyRemotingServer->DefaultRequestProcessor:processRequest
+note left of DefaultRequestProcessor
+    private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+    private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+    private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+    private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+    private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
+end note
+DefaultRequestProcessor ->RouteInfoManager:
+RouteInfoManager -> "broker\nfilter\nconsumer\nproducter":ok
+@enduml

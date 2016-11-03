@@ -1,0 +1,21 @@
+@startuml
+
+title recoketmq-remoting
+==启动阶段==
+NettyRemotingClient -> NettyClientHandler:initChannel
+NettyRemotingClient -> NettyRemotingClient:start
+NettyRemotingAbstract ->NettyRemotingAbstract
+NettyServerHandler <- NerttyRemotingServer:initChannel
+NerttyRemotingServer -> NerttyRemotingServer:start
+==调用阶段==
+NettyRemotingClient -> NettyRemotingAbstract:\t\t\tinvokeSyncImpl
+NettyRemotingAbstract ->NettyRemotingAbstract:responseTable.put(opaque, responseFuture)
+NettyRemotingAbstract-> NettyServerHandler:channel.writeAndFlush(request)
+NettyServerHandler -> NettyRemotingAbstract:processRequestCommand
+NettyRemotingAbstract -> NettyRequestProcessor:\t\t\t\t\tprocessRequest 
+NettyRemotingAbstract <- NettyRequestProcessor:\t\t\t\t\t返回response 
+NettyRemotingAbstract ->NettyClientHandler:ctx.writeAndFlush(response)
+NettyRemotingAbstract <-NettyClientHandler:processResponseCommand 
+NettyRemotingAbstract ->NettyRemotingAbstract:responseTable.get(opaque)
+NettyRemotingAbstract ->NettyRemotingClient:\t\tRemotingCommand(response)
+@enduml

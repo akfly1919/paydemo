@@ -1,0 +1,40 @@
+@startuml
+
+title recoketmqBroker
+cmd ->BrokerStartup:./mqbroker
+activate BrokerStartup
+BrokerStartup->BrokerStartup:main
+BrokerStartup ->BrokerStartup:createBrokerController
+BrokerStartup ->BrokerController:initialize
+activate BrokerController
+BrokerController ->TopicConfigManager:\tload加载Topic配置
+BrokerController <-TopicConfigManager:return true
+BrokerController ->ConsumerOffsetManager:\t\tload加载Consumer Offset
+BrokerController <-ConsumerOffsetManager:return true
+BrokerController ->SubscriptionGroupManager:\t\tload加载Consumer subscription
+BrokerController <-SubscriptionGroupManager:return true
+BrokerController ->DefaultMessageStore:\t\tload初始化存储层
+BrokerController <-DefaultMessageStore:return true
+BrokerController ->NettyRemotingServer:\t\t\t初始化通讯层
+BrokerController <-NettyRemotingServer:ok
+BrokerController ->NettyRemotingServer:\t\t\tregisterProcessor注册处理类
+BrokerController <-NettyRemotingServer:ok
+BrokerController ->BrokerController:定时刷消费进度\n定时删除非常落后的消费进度，10分钟扫描一次\n定时获取Name Server地址\nMaster，增加统计日志\nSlave定时从Master同步配置信息
+BrokerController ->BrokerStartup:
+activate BrokerController
+BrokerStartup ->BrokerController:start
+BrokerController ->MessageStore:start启动消息存储
+BrokerController ->RemotingServer:start启动netty server 接收各种请求操作
+BrokerController ->BrokerOuterAPI:start启动netty client通信client
+BrokerController ->PullRequestHoldService:start 拉消息请求管理
+BrokerController ->ClientHousekeepingService:start定期检测客户端(producer/consumer/filterServer)连接
+BrokerController ->FilterServerManager:start如果有配置,启动filter,也可以单独启动
+BrokerController ->BrokerOuterAPI:registerBrokerAll BrokerOuterAPI把信息注册到namesrv上
+BrokerController ->BrokerController:定时注册Broker到Name Server\n如果namesrv有变动
+BrokerController ->BrokerController:addDeleteTopicTask删除多余的Topic
+BrokerController ->BrokerStartup
+BrokerStartup ->cmd
+deactivate BrokerController
+deactivate BrokerController
+deactivate BrokerStartup
+@enduml
